@@ -8,7 +8,6 @@ cloud-pc:
 runs-on: ubuntu-latest
 
 steps:
-
   - name: Install Tailscale
     run: |
       curl -fsSL https://tailscale.com/install.sh | sh
