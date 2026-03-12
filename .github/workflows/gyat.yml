@@ -1,47 +1,33 @@
 name: Ubuntu-Docker-Desktop
-
 on:
-workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
-cloud-pc:
-runs-on: ubuntu-latest
+  cloud-pc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Tailscale
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
 
-steps:
-  - name: Install Tailscale
-    run: |
-      curl -fsSL https://tailscale.com/install.sh | sh
+      - name: Connect Tailscale
+        run: |
+          sudo tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=github-docker-pc --reset
 
-  - name: Connect Tailscale
-    run: |
-      sudo tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=github-docker-pc --reset
+      - name: Pull Desktop Container
+        run: |
+          docker pull dorowu/ubuntu-desktop-lxde-vnc
 
-  - name: Pull Desktop Container
-    run: |
-      docker pull dorowu/ubuntu-desktop-lxde-vnc
+      - name: Start Desktop
+        run: |
+          docker run -d -p 6080:80 --name ubuntu-desktop dorowu/ubuntu-desktop-lxde-vnc
 
-  - name: Start Desktop
-    run: |
-      docker run -d \
-      -p 6080:80 \
-      --name ubuntu-desktop \
-      dorowu/ubuntu-desktop-lxde-vnc
-
-  - name: Show Connection Info
-    run: |
-      TS_IP=$(tailscale ip -4)
-
-      echo "====================================="
-      echo "UBUNTU DESKTOP READY"
-      echo ""
-      echo "OPEN IN BROWSER:"
-      echo "http://$TS_IP:6080"
-      echo ""
-      echo "VNC PASSWORD:"
-      echo "ubuntu"
-      echo "====================================="
-
-      while true
-      do
-        sleep 60
-      done
+      - name: Show Connection Info
+        run: |
+          TS_IP=$(tailscale ip -4)
+          echo "====================================="
+          echo "UBUNTU DESKTOP READY"
+          echo "OPEN IN BROWSER: http://$TS_IP:6080"
+          echo "VNC PASSWORD: ubuntu"
+          echo "====================================="
+          while true; do sleep 60; done
