@@ -1,0 +1,46 @@
+name: Ubuntu-Desktop-RDP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ubuntu-rdp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update system
+        run: |
+          sudo apt update
+          sudo apt upgrade -y
+
+      - name: Install desktop
+        run: |
+          sudo apt install xfce4 xfce4-goodies xrdp -y
+          echo xfce4-session > ~/.xsession
+          sudo systemctl enable xrdp
+          sudo systemctl start xrdp
+
+      - name: Create user
+        run: |
+          sudo useradd -m rdpuser
+          echo "rdpuser:MySecurePass123!" | sudo chpasswd
+          sudo usermod -aG sudo rdpuser
+
+      - name: Install Tailscale
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
+
+      - name: Connect Tailscale
+        run: |
+          sudo tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=github-ubuntu --reset
+
+      - name: Show connection info
+        run: |
+          IP=$(tailscale ip -4)
+          echo "=============================="
+          echo "Connect using RDP:"
+          echo "$IP:3389"
+          echo "User: rdpuser"
+          echo "Pass: MySecurePass123!"
+          echo "=============================="
+          while true; do sleep 60; done
